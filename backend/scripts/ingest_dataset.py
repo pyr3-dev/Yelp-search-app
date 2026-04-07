@@ -25,12 +25,15 @@ load_dotenv(Path(__file__).parent.parent / ".env")
 
 BATCH_SIZE = 1000
 
-DATASET_FILES = [
+REQUIRED_FILES = [
     "yelp_academic_dataset_user.json",
     "yelp_academic_dataset_business.json",
     "yelp_academic_dataset_review.json",
     "yelp_academic_dataset_tip.json",
     "yelp_academic_dataset_checkin.json",
+]
+
+OPTIONAL_FILES = [
     "yelp_academic_dataset_photo.json",
 ]
 
@@ -42,7 +45,7 @@ def _get_dataset_path() -> Path:
             "YELP_DATASET_PATH is not set. Add it to backend/.env"
         )
     path = Path(dataset_path)
-    missing = [f for f in DATASET_FILES if not (path / f).exists()]
+    missing = [f for f in REQUIRED_FILES if not (path / f).exists()]
     if missing:
         raise RuntimeError(
             f"Missing dataset files in {path}:\n" + "\n".join(missing)
@@ -243,11 +246,15 @@ def _ingest_checkins(conn, path: Path) -> None:
 
 
 def _ingest_photos(conn, path: Path) -> None:
+    photo_file = path / "yelp_academic_dataset_photo.json"
+    if not photo_file.exists():
+        print("  photo: file not found, skipping")
+        return
     print("Ingesting photo...")
     sql = sa.text(_upsert_sql("photo", ["photo_id", "business_id", "caption", "label"],
                               conflict_col="photo_id"))
     batch, count = [], 0
-    with open(path / "yelp_academic_dataset_photo.json", encoding="utf-8") as f:
+    with open(photo_file, encoding="utf-8") as f:
         for line in f:
             line = line.strip()
             if not line:
