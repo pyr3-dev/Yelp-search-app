@@ -154,3 +154,87 @@ def test_get_business_photos_returns_200():
         response = client.get("/businesses/test_biz_001/photos")
     assert response.status_code == 200
     assert response.json() == []
+
+
+def test_get_business_detail_happy_path():
+    from datetime import datetime
+
+    mock_biz = MagicMock()
+    mock_biz.__table__ = MagicMock()
+    # Set up columns to iterate: simulate business.__table__.columns
+    col_business_id = MagicMock(); col_business_id.name = "business_id"
+    col_name = MagicMock(); col_name.name = "name"
+    col_city = MagicMock(); col_city.name = "city"
+    col_stars = MagicMock(); col_stars.name = "stars"
+    col_review_count = MagicMock(); col_review_count.name = "review_count"
+    col_address = MagicMock(); col_address.name = "address"
+    col_state = MagicMock(); col_state.name = "state"
+    col_postal_code = MagicMock(); col_postal_code.name = "postal_code"
+    col_latitude = MagicMock(); col_latitude.name = "latitude"
+    col_longitude = MagicMock(); col_longitude.name = "longitude"
+    col_is_open = MagicMock(); col_is_open.name = "is_open"
+    col_attributes = MagicMock(); col_attributes.name = "attributes"
+    col_categories = MagicMock(); col_categories.name = "categories"
+    col_hours = MagicMock(); col_hours.name = "hours"
+    mock_biz.__table__.columns = [
+        col_business_id, col_name, col_city, col_stars, col_review_count,
+        col_address, col_state, col_postal_code, col_latitude, col_longitude,
+        col_is_open, col_attributes, col_categories, col_hours,
+    ]
+    mock_biz.business_id = "test_biz_001"
+    mock_biz.name = "Joe's Diner"
+    mock_biz.city = "Phoenix"
+    mock_biz.stars = 4.5
+    mock_biz.review_count = 250
+    mock_biz.address = "100 Main St"
+    mock_biz.state = "AZ"
+    mock_biz.postal_code = "85001"
+    mock_biz.latitude = 33.44
+    mock_biz.longitude = -112.07
+    mock_biz.is_open = True
+    mock_biz.attributes = {}
+    mock_biz.categories = ["Diners"]
+    mock_biz.hours = {}
+
+    mock_tip = MagicMock()
+    mock_tip.id = 1
+    mock_tip.text = "Great place"
+    mock_tip.date = datetime(2023, 6, 15, 12, 0, 0)
+    mock_tip.compliment_count = 3
+    mock_tip.user_id = "user_xyz"
+
+    with patch("controllers.businesses.get_business_detail") as mock_svc:
+        mock_svc.return_value = (mock_biz, [mock_tip], 5)
+        response = client.get("/businesses/test_biz_001")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["name"] == "Joe's Diner"
+    assert data["checkin_count"] == 5
+    assert len(data["tips"]) == 1
+    assert data["tips"][0]["text"] == "Great place"
+
+
+def test_get_business_reviews_with_datetime():
+    from datetime import datetime
+
+    mock_review = MagicMock()
+    mock_review.review_id = "rev_001"
+    mock_review.user_id = "user_abc"
+    mock_review.stars = 4
+    mock_review.date = datetime(2023, 3, 10, 8, 0, 0)
+    mock_review.text = "Great food"
+    mock_review.useful = 1
+    mock_review.funny = 0
+    mock_review.cool = 2
+
+    with patch("controllers.businesses.get_business_reviews") as mock_svc:
+        mock_svc.return_value = ([mock_review], 1)
+        response = client.get("/businesses/test_biz_001/reviews")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total"] == 1
+    assert data["results"][0]["review_id"] == "rev_001"
+    assert data["results"][0]["stars"] == 4
+    assert "2023" in data["results"][0]["date"]

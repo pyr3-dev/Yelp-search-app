@@ -8,7 +8,6 @@ from schema import (
     BusinessDetail,
     BusinessSearchResponse,
     PhotoResult,
-    ReviewResult,
     ReviewsResponse,
     TipResult,
 )

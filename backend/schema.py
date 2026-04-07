@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, ConfigDict
 
@@ -38,7 +39,7 @@ class TipResult(BaseModel):
 
     id: int
     text: Optional[str] = None
-    date: Optional[str] = None
+    date: Optional[datetime] = None
     compliment_count: Optional[int] = None
     user_id: Optional[str] = None
 
@@ -56,7 +57,7 @@ class ReviewResult(BaseModel):
     review_id: str
     user_id: Optional[str] = None
     stars: Optional[int] = None
-    date: Optional[str] = None
+    date: Optional[datetime] = None
     text: Optional[str] = None
     useful: Optional[int] = None
     funny: Optional[int] = None
