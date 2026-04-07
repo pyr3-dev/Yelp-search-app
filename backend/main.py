@@ -1,16 +1,15 @@
 import os
-from contextlib import asynccontextmanager
 
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from routes.auth import router as auth_router
+from routes.businesses import router as businesses_router
 
 load_dotenv()
 
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
-
 
 app = FastAPI()
 
@@ -23,3 +22,4 @@ app.add_middleware(
 )
 
 app.include_router(auth_router)
+app.include_router(businesses_router)
