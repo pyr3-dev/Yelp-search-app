@@ -10,9 +10,8 @@ from sqlalchemy import (
     Text,
 )
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
-from sqlalchemy.sql import func
 
-from pgvector.sqlalchemy import Vector
+from pgvector.sqlalchemy import Vector  # noqa: F401 — reserved for future embedding column
 
 from database import Base
 
