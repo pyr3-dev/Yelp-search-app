@@ -1,0 +1,18 @@
+Task:
+Build a simple JavaScript web app that: 
+Uses the Yelp API to fetch restaurants for a given city
+Has a basic web UI where a user can input a city and see results
+Displays a clean, accurate list of restaurants
+
+Requirements:
+Use real Yelp API data (no mock data)
+Results should be relevant to the city (within city limits or 5-mile radius)
+Keep the solution simple and clean, avoid overengineering
+Display: name, rating, address, and coordinates
+UI can be minimal, but should be functional and easy to use
+
+Submission:
+Share a live demo link (preferred) or clear instructions to run locally
+Provide your code (GitHub or file)
+Include a short explanation (3–5 sentences) of your approach
+Briefly explain how you handled accuracy and edge cases

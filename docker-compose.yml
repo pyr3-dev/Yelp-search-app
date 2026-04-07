@@ -1,0 +1,41 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: yelp_app_postgres_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  # Ollama — local LLM inference on your RTX 5060 Ti
+  # Requirements before enabling:
+  #   1. Install NVIDIA Container Toolkit on host
+  #      https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html
+  #   2. Uncomment this service and the ollama_data volume below
+  #   3. Set LLM_PROVIDER=ollama in backend/.env
+  #   4. Pull the model: docker exec novaleap_ollama ollama pull qwen2.5:7b
+  #
+  # ollama:
+  #   image: ollama/ollama
+  #   container_name: novaleap_ollama
+  #   ports:
+  #     - "11434:11434"
+  #   volumes:
+  #     - ollama_data:/root/.ollama
+  #   deploy:
+  #     resources:
+  #       reservations:
+  #         devices:
+  #           - driver: nvidia
+  #             count: 1
+  #             capabilities: [gpu]
+  #   restart: unless-stopped
+
+volumes:
+  pgdata:
+  # ollama_data:
