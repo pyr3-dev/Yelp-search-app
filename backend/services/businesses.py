@@ -16,7 +16,7 @@ def search_businesses(
     limit: int = 20,
 ) -> tuple[list[Business], int]:
     query = db.query(Business).filter(
-        Business.city.ilike(city)
+        Business.city.ilike(f"%{city}%")
     )
     if category:
         query = query.filter(Business.categories.contains([category]))
