@@ -99,6 +99,7 @@ def ingest_businesses(cursor, path: Path) -> None:
         chunk["categories"] = chunk["categories"].apply(
             lambda x: [c.strip() for c in x.split(",")] if isinstance(x, str) and x else []
         )
+        chunk["state"] = chunk["state"].str[:2]
         chunk["is_open"] = chunk["is_open"].fillna(0).astype(bool)
         psycopg2.extras.execute_values(cursor, sql, _rows(chunk), page_size=5000)
         count += len(chunk)
