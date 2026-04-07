@@ -1,50 +1,60 @@
-"""ingest_yelp_dataset
+"""
+Yelp dataset ingestion script.
 
-Revision ID: 2e9263df2299
-Revises: ff2141bac104
-Create Date: 2026-04-08 05:51:10.960850
+Streams all 6 Yelp Open Dataset JSON files into PostgreSQL in 1000-row batches.
+Uses INSERT ... ON CONFLICT DO NOTHING — safe to re-run without duplication.
 
+Usage (from backend/):
+    python scripts/ingest_dataset.py
+
+Requires:
+    YELP_DATASET_PATH and DATABASE_URL set in backend/.env
 """
 
 import json
 import os
+import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Sequence, Union
 
 import sqlalchemy as sa
-from alembic import op
+from dotenv import load_dotenv
 
-revision: str = "2e9263df2299"
-down_revision: Union[str, Sequence[str], None] = "ff2141bac104"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+# Load .env from backend/ directory
+load_dotenv(Path(__file__).parent.parent / ".env")
 
 BATCH_SIZE = 1000
+
+DATASET_FILES = [
+    "yelp_academic_dataset_user.json",
+    "yelp_academic_dataset_business.json",
+    "yelp_academic_dataset_review.json",
+    "yelp_academic_dataset_tip.json",
+    "yelp_academic_dataset_checkin.json",
+    "yelp_academic_dataset_photo.json",
+]
 
 
 def _get_dataset_path() -> Path:
     dataset_path = os.environ.get("YELP_DATASET_PATH")
     if not dataset_path:
         raise RuntimeError(
-            "YELP_DATASET_PATH environment variable is not set. "
-            "Add it to backend/.env before running this migration."
+            "YELP_DATASET_PATH is not set. Add it to backend/.env"
         )
     path = Path(dataset_path)
-    files = [
-        "yelp_academic_dataset_user.json",
-        "yelp_academic_dataset_business.json",
-        "yelp_academic_dataset_review.json",
-        "yelp_academic_dataset_tip.json",
-        "yelp_academic_dataset_checkin.json",
-        "yelp_academic_dataset_photo.json",
-    ]
-    missing = [f for f in files if not (path / f).exists()]
+    missing = [f for f in DATASET_FILES if not (path / f).exists()]
     if missing:
         raise RuntimeError(
             f"Missing dataset files in {path}:\n" + "\n".join(missing)
         )
     return path
+
+
+def _get_engine() -> sa.Engine:
+    database_url = os.environ.get("DATABASE_URL")
+    if not database_url:
+        raise RuntimeError("DATABASE_URL is not set. Add it to backend/.env")
+    return sa.create_engine(database_url)
 
 
 def _parse_date(value: str | None) -> datetime | None:
@@ -58,8 +68,24 @@ def _parse_date(value: str | None) -> datetime | None:
     return None
 
 
-def _ingest_users(bind, path: Path) -> None:
+def _upsert_sql(table: str, columns: list[str], conflict_col: str | None = None) -> str:
+    cols = ", ".join(columns)
+    vals = ", ".join(f":{c}" for c in columns)
+    if conflict_col is None:
+        return f"INSERT INTO {table} ({cols}) VALUES ({vals})"
+    return (
+        f"INSERT INTO {table} ({cols}) VALUES ({vals}) "
+        f"ON CONFLICT ({conflict_col}) DO NOTHING"
+    )
+
+
+def _ingest_users(conn, path: Path) -> None:
     print("Ingesting yelp_user...")
+    sql = sa.text(_upsert_sql(
+        "yelp_user",
+        ["user_id", "name", "review_count", "yelping_since", "average_stars", "fans"],
+        conflict_col="user_id",
+    ))
     batch, count = [], 0
     with open(path / "yelp_academic_dataset_user.json", encoding="utf-8") as f:
         for line in f:
@@ -76,27 +102,23 @@ def _ingest_users(bind, path: Path) -> None:
                 "fans": row.get("fans"),
             })
             if len(batch) >= BATCH_SIZE:
-                bind.execute(
-                    sa.text(_upsert_sql("yelp_user", ["user_id", "name", "review_count",
-                                              "yelping_since", "average_stars", "fans"])),
-                    batch,
-                )
+                conn.execute(sql, batch)
                 count += len(batch)
                 batch = []
                 if count % 100_000 == 0:
                     print(f"  yelp_user: {count:,} rows")
     if batch:
-        bind.execute(
-            sa.text(_upsert_sql("yelp_user", ["user_id", "name", "review_count",
-                                      "yelping_since", "average_stars", "fans"])),
-            batch,
-        )
+        conn.execute(sql, batch)
         count += len(batch)
     print(f"  yelp_user done: {count:,} rows")
 
 
-def _ingest_businesses(bind, path: Path) -> None:
+def _ingest_businesses(conn, path: Path) -> None:
     print("Ingesting business...")
+    cols = ["business_id", "name", "address", "city", "state", "postal_code",
+            "latitude", "longitude", "stars", "review_count", "is_open",
+            "attributes", "categories", "hours"]
+    sql = sa.text(_upsert_sql("business", cols, conflict_col="business_id"))
     batch, count = [], 0
     with open(path / "yelp_academic_dataset_business.json", encoding="utf-8") as f:
         for line in f:
@@ -122,29 +144,22 @@ def _ingest_businesses(bind, path: Path) -> None:
                 "hours": row.get("hours"),
             })
             if len(batch) >= BATCH_SIZE:
-                bind.execute(
-                    sa.text(_upsert_sql("business", ["business_id", "name", "address", "city",
-                                             "state", "postal_code", "latitude", "longitude",
-                                             "stars", "review_count", "is_open",
-                                             "attributes", "categories", "hours"])),
-                    batch,
-                )
+                conn.execute(sql, batch)
                 count += len(batch)
                 batch = []
+                if count % 100_000 == 0:
+                    print(f"  business: {count:,} rows")
     if batch:
-        bind.execute(
-            sa.text(_upsert_sql("business", ["business_id", "name", "address", "city",
-                                     "state", "postal_code", "latitude", "longitude",
-                                     "stars", "review_count", "is_open",
-                                     "attributes", "categories", "hours"])),
-            batch,
-        )
+        conn.execute(sql, batch)
         count += len(batch)
     print(f"  business done: {count:,} rows")
 
 
-def _ingest_reviews(bind, path: Path) -> None:
+def _ingest_reviews(conn, path: Path) -> None:
     print("Ingesting review (this may take a while)...")
+    cols = ["review_id", "user_id", "business_id", "stars", "date", "text",
+            "useful", "funny", "cool"]
+    sql = sa.text(_upsert_sql("review", cols, conflict_col="review_id"))
     batch, count = [], 0
     with open(path / "yelp_academic_dataset_review.json", encoding="utf-8") as f:
         for line in f:
@@ -164,27 +179,21 @@ def _ingest_reviews(bind, path: Path) -> None:
                 "cool": row.get("cool"),
             })
             if len(batch) >= BATCH_SIZE:
-                bind.execute(
-                    sa.text(_upsert_sql("review", ["review_id", "user_id", "business_id",
-                                           "stars", "date", "text", "useful", "funny", "cool"])),
-                    batch,
-                )
+                conn.execute(sql, batch)
                 count += len(batch)
                 batch = []
                 if count % 100_000 == 0:
                     print(f"  review: {count:,} rows")
     if batch:
-        bind.execute(
-            sa.text(_upsert_sql("review", ["review_id", "user_id", "business_id",
-                                   "stars", "date", "text", "useful", "funny", "cool"])),
-            batch,
-        )
+        conn.execute(sql, batch)
         count += len(batch)
     print(f"  review done: {count:,} rows")
 
 
-def _ingest_tips(bind, path: Path) -> None:
+def _ingest_tips(conn, path: Path) -> None:
     print("Ingesting tip...")
+    cols = ["text", "date", "compliment_count", "business_id", "user_id"]
+    sql = sa.text(_upsert_sql("tip", cols, conflict_col=None))
     batch, count = [], 0
     with open(path / "yelp_academic_dataset_tip.json", encoding="utf-8") as f:
         for line in f:
@@ -200,27 +209,18 @@ def _ingest_tips(bind, path: Path) -> None:
                 "user_id": row.get("user_id"),
             })
             if len(batch) >= BATCH_SIZE:
-                bind.execute(
-                    sa.text(_upsert_sql("tip", ["text", "date", "compliment_count",
-                                        "business_id", "user_id"],
-                                pk=None)),
-                    batch,
-                )
+                conn.execute(sql, batch)
                 count += len(batch)
                 batch = []
     if batch:
-        bind.execute(
-            sa.text(_upsert_sql("tip", ["text", "date", "compliment_count",
-                                "business_id", "user_id"],
-                        pk=None)),
-            batch,
-        )
+        conn.execute(sql, batch)
         count += len(batch)
     print(f"  tip done: {count:,} rows")
 
 
-def _ingest_checkins(bind, path: Path) -> None:
+def _ingest_checkins(conn, path: Path) -> None:
     print("Ingesting checkin...")
+    sql = sa.text(_upsert_sql("checkin", ["business_id", "dates"], conflict_col="business_id"))
     batch, count = [], 0
     with open(path / "yelp_academic_dataset_checkin.json", encoding="utf-8") as f:
         for line in f:
@@ -233,25 +233,19 @@ def _ingest_checkins(bind, path: Path) -> None:
                 "dates": row.get("date", ""),
             })
             if len(batch) >= BATCH_SIZE:
-                bind.execute(
-                    sa.text(_upsert_sql("checkin", ["business_id", "dates"],
-                                conflict_col="business_id")),
-                    batch,
-                )
+                conn.execute(sql, batch)
                 count += len(batch)
                 batch = []
     if batch:
-        bind.execute(
-            sa.text(_upsert_sql("checkin", ["business_id", "dates"],
-                        conflict_col="business_id")),
-            batch,
-        )
+        conn.execute(sql, batch)
         count += len(batch)
     print(f"  checkin done: {count:,} rows")
 
 
-def _ingest_photos(bind, path: Path) -> None:
+def _ingest_photos(conn, path: Path) -> None:
     print("Ingesting photo...")
+    sql = sa.text(_upsert_sql("photo", ["photo_id", "business_id", "caption", "label"],
+                              conflict_col="photo_id"))
     batch, count = [], 0
     with open(path / "yelp_academic_dataset_photo.json", encoding="utf-8") as f:
         for line in f:
@@ -266,50 +260,34 @@ def _ingest_photos(bind, path: Path) -> None:
                 "label": row.get("label"),
             })
             if len(batch) >= BATCH_SIZE:
-                bind.execute(
-                    sa.text(_upsert_sql("photo", ["photo_id", "business_id", "caption", "label"])),
-                    batch,
-                )
+                conn.execute(sql, batch)
                 count += len(batch)
                 batch = []
     if batch:
-        bind.execute(
-            sa.text(_upsert_sql("photo", ["photo_id", "business_id", "caption", "label"])),
-            batch,
-        )
+        conn.execute(sql, batch)
         count += len(batch)
     print(f"  photo done: {count:,} rows")
 
 
-def _upsert_sql(table: str, columns: list[str], pk: str | None = None,
-                conflict_col: str | None = None) -> str:
-    """Build INSERT ... ON CONFLICT DO NOTHING SQL."""
-    cols = ", ".join(columns)
-    vals = ", ".join(f":{c}" for c in columns)
-    if pk is None and conflict_col is None:
-        return f"INSERT INTO {table} ({cols}) VALUES ({vals})"
-    conflict = conflict_col or columns[0]
-    return (
-        f"INSERT INTO {table} ({cols}) VALUES ({vals}) "
-        f"ON CONFLICT ({conflict}) DO NOTHING"
-    )
-
-
-def upgrade() -> None:
+def main() -> None:
     path = _get_dataset_path()
-    bind = op.get_bind()
+    engine = _get_engine()
 
-    _ingest_users(bind, path)
-    _ingest_businesses(bind, path)
-    _ingest_reviews(bind, path)
-    _ingest_tips(bind, path)
-    _ingest_checkins(bind, path)
-    _ingest_photos(bind, path)
+    with engine.connect() as conn:
+        _ingest_users(conn, path)
+        _ingest_businesses(conn, path)
+        _ingest_reviews(conn, path)
+        _ingest_tips(conn, path)
+        _ingest_checkins(conn, path)
+        _ingest_photos(conn, path)
+        conn.commit()
 
     print("Yelp dataset ingestion complete.")
 
 
-def downgrade() -> None:
-    bind = op.get_bind()
-    for table in ["photo", "checkin", "tip", "review", "business", "yelp_user"]:
-        bind.execute(sa.text(f"DELETE FROM {table}"))
+if __name__ == "__main__":
+    try:
+        main()
+    except RuntimeError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)

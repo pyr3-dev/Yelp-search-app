@@ -3,7 +3,12 @@
     "allow": [
       "Bash(git -C /c/Users/Joshua/Documents/_0/Yelp-search-app log --oneline -5)",
       "Read(//c/Users/Joshua/.claude/projects/C--Users-Joshua-Documents--0-Yelp-search-app/memory//**)",
-      "Read(//c/Users/Joshua/.claude/projects/C--Users-Joshua-Documents--0-Yelp-search-app/memory/**)"
+      "Read(//c/Users/Joshua/.claude/projects/C--Users-Joshua-Documents--0-Yelp-search-app/memory/**)",
+      "Bash(pytest tests/test_models.py -v)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(alembic revision:*)",
+      "Bash(docker exec yelp_app_postgres_db:*)"
     ]
   }
 }
