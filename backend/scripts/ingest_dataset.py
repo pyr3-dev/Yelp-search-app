@@ -63,7 +63,16 @@ def _rows(df: pd.DataFrame) -> list[tuple]:
     return list(df.astype(object).where(pd.notna(df), None).itertuples(index=False, name=None))
 
 
-def ingest_users(cursor, path: Path) -> None:
+COMMIT_EVERY = 100_000
+
+
+def _commit_if_due(conn, count: int, label: str) -> None:
+    if count % COMMIT_EVERY == 0:
+        conn.commit()
+        print(f"  {label}: {count:,} rows (committed)")
+
+
+def ingest_users(conn, cursor, path: Path) -> None:
     print("Ingesting yelp_user...")
     sql = """
         INSERT INTO yelp_user (user_id, name, review_count, yelping_since, average_stars, fans)
@@ -76,12 +85,12 @@ def ingest_users(cursor, path: Path) -> None:
         chunk["yelping_since"] = pd.to_datetime(chunk["yelping_since"], errors="coerce")
         psycopg2.extras.execute_values(cursor, sql, _rows(chunk), page_size=5000)
         count += len(chunk)
-        if count % 100_000 == 0:
-            print(f"  yelp_user: {count:,} rows")
+        _commit_if_due(conn, count, "yelp_user")
+    conn.commit()
     print(f"  yelp_user done: {count:,} rows")
 
 
-def ingest_businesses(cursor, path: Path) -> None:
+def ingest_businesses(conn, cursor, path: Path) -> None:
     print("Ingesting business...")
     sql = """
         INSERT INTO business (
@@ -103,12 +112,12 @@ def ingest_businesses(cursor, path: Path) -> None:
         chunk["is_open"] = chunk["is_open"].fillna(0).astype(bool)
         psycopg2.extras.execute_values(cursor, sql, _rows(chunk), page_size=5000)
         count += len(chunk)
-        if count % 100_000 == 0:
-            print(f"  business: {count:,} rows")
+        _commit_if_due(conn, count, "business")
+    conn.commit()
     print(f"  business done: {count:,} rows")
 
 
-def ingest_reviews(cursor, path: Path) -> None:
+def ingest_reviews(conn, cursor, path: Path) -> None:
     print("Ingesting review (this may take a while)...")
     sql = """
         INSERT INTO review (review_id, user_id, business_id, stars, date, text, useful, funny, cool)
@@ -121,17 +130,16 @@ def ingest_reviews(cursor, path: Path) -> None:
         chunk["date"] = pd.to_datetime(chunk["date"], errors="coerce")
         psycopg2.extras.execute_values(cursor, sql, _rows(chunk), page_size=5000)
         count += len(chunk)
-        if count % 100_000 == 0:
-            print(f"  review: {count:,} rows")
+        _commit_if_due(conn, count, "review")
+    conn.commit()
     print(f"  review done: {count:,} rows")
 
 
-def ingest_tips(cursor, path: Path) -> None:
+def ingest_tips(conn, cursor, path: Path) -> None:
     print("Ingesting tip...")
-    # tip has an auto-increment PK — no conflict target, plain INSERT
     sql = """
         INSERT INTO tip (text, date, compliment_count, business_id, user_id)
-        VALUES %s
+        VALUES %s ON CONFLICT DO NOTHING
     """
     cols = ["text", "date", "compliment_count", "business_id", "user_id"]
     count = 0
@@ -140,10 +148,12 @@ def ingest_tips(cursor, path: Path) -> None:
         chunk["date"] = pd.to_datetime(chunk["date"], errors="coerce")
         psycopg2.extras.execute_values(cursor, sql, _rows(chunk), page_size=5000)
         count += len(chunk)
+        _commit_if_due(conn, count, "tip")
+    conn.commit()
     print(f"  tip done: {count:,} rows")
 
 
-def ingest_checkins(cursor, path: Path) -> None:
+def ingest_checkins(conn, cursor, path: Path) -> None:
     print("Ingesting checkin...")
     sql = """
         INSERT INTO checkin (business_id, dates)
@@ -155,10 +165,12 @@ def ingest_checkins(cursor, path: Path) -> None:
         chunk["dates"] = chunk["dates"].fillna("")
         psycopg2.extras.execute_values(cursor, sql, _rows(chunk), page_size=5000)
         count += len(chunk)
+        _commit_if_due(conn, count, "checkin")
+    conn.commit()
     print(f"  checkin done: {count:,} rows")
 
 
-def ingest_photos(cursor, path: Path) -> None:
+def ingest_photos(conn, cursor, path: Path) -> None:
     photo_file = path / "yelp_academic_dataset_photo.json"
     if not photo_file.exists():
         print("  photo: file not found, skipping")
@@ -174,6 +186,8 @@ def ingest_photos(cursor, path: Path) -> None:
         chunk = chunk[cols].copy()
         psycopg2.extras.execute_values(cursor, sql, _rows(chunk), page_size=5000)
         count += len(chunk)
+        _commit_if_due(conn, count, "photo")
+    conn.commit()
     print(f"  photo done: {count:,} rows")
 
 
@@ -184,21 +198,15 @@ def main() -> None:
         raise RuntimeError("DATABASE_URL is not set. Add it to backend/.env")
 
     conn = _get_conn(database_url)
-    try:
-        cursor = conn.cursor()
-        ingest_users(cursor, path)
-        ingest_businesses(cursor, path)
-        ingest_reviews(cursor, path)
-        ingest_tips(cursor, path)
-        ingest_checkins(cursor, path)
-        ingest_photos(cursor, path)
-        conn.commit()
-        cursor.close()
-    except Exception:
-        conn.rollback()
-        raise
-    finally:
-        conn.close()
+    cursor = conn.cursor()
+    ingest_users(conn, cursor, path)
+    ingest_businesses(conn, cursor, path)
+    ingest_reviews(conn, cursor, path)
+    ingest_tips(conn, cursor, path)
+    ingest_checkins(conn, cursor, path)
+    ingest_photos(conn, cursor, path)
+    cursor.close()
+    conn.close()
 
     print("Yelp dataset ingestion complete.")
 
