@@ -9,7 +9,7 @@ beforeEach(() => {
     category: null,
     minStars: null,
     name: null,
-    scope: 'city',
+    scope: null,
     sortBy: 'relevance',
     order: 'desc',
     page: 1,
@@ -18,15 +18,16 @@ beforeEach(() => {
 })
 
 describe('FilterBar scope toggle', () => {
-  it('renders both scope buttons', () => {
+  it('renders all three scope buttons', () => {
     render(<FilterBar />)
+    expect(screen.getByRole('button', { name: 'Any' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Within city' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Within 5 miles' })).toBeInTheDocument()
   })
 
-  it('Within city button has active style by default', () => {
+  it('Any button has active style by default', () => {
     render(<FilterBar />)
-    expect(screen.getByRole('button', { name: 'Within city' }).className).toContain('bg-slate-800')
+    expect(screen.getByRole('button', { name: 'Any' }).className).toContain('bg-slate-800')
   })
 
   it('clicking Within 5 miles sets scope to radius in store', () => {

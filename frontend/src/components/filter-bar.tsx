@@ -80,6 +80,16 @@ export function FilterBar() {
       {/* Scope toggle */}
       <div className="ml-auto flex overflow-hidden rounded-md border border-slate-200 text-xs">
         <button
+          onClick={() => setFilter({ scope: null })}
+          className={`px-3 py-1.5 transition-colors ${
+            scope === null
+              ? 'bg-slate-800 text-white'
+              : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          Any
+        </button>
+        <button
           onClick={() => setFilter({ scope: 'city' })}
           className={`px-3 py-1.5 transition-colors ${
             scope === 'city'

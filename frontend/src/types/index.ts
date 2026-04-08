@@ -59,7 +59,7 @@ export type SearchFilters = {
   category: string | null
   minStars: number | null
   name: string | null
-  scope: 'city' | 'radius'
+  scope: 'city' | 'radius' | null
   sortBy: 'relevance' | 'stars' | 'review_count' | 'name'
   order: 'asc' | 'desc'
 }

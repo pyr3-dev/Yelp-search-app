@@ -37,7 +37,7 @@ export function SearchPage() {
     fetchBusinesses({
       city,
       ...(name ? { name } : {}),
-      scope,
+      ...(scope ? { scope } : {}),
       ...(category ? { category } : {}),
       ...(minStars != null ? { min_stars: minStars } : {}),
       sort_by: sortBy,

@@ -16,7 +16,7 @@ export const useSearchStore = create<SearchState>((set) => ({
   category: null,
   minStars: null,
   name: null,
-  scope: 'city',
+  scope: null,
   sortBy: 'relevance',
   order: 'desc',
   page: 1,
