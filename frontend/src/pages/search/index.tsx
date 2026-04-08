@@ -13,7 +13,7 @@ import type { BusinessDetail, BusinessResult, PhotoResult } from "@/types";
 const LIMIT = 20;
 
 export function SearchPage() {
-  const { city, category, minStars, sortBy, order, page, selectedId } =
+  const { city, name, scope, category, minStars, sortBy, order, page, selectedId } =
     useSearchStore();
 
   // List state
@@ -36,6 +36,8 @@ export function SearchPage() {
     setListError(null);
     fetchBusinesses({
       city,
+      ...(name ? { name } : {}),
+      scope,
       ...(category ? { category } : {}),
       ...(minStars != null ? { min_stars: minStars } : {}),
       sort_by: sortBy,
@@ -51,7 +53,7 @@ export function SearchPage() {
         setListError("Failed to load results. Is the backend running?"),
       )
       .finally(() => setListLoading(false));
-  }, [city, category, minStars, sortBy, order, page]);
+  }, [city, name, scope, category, minStars, sortBy, order, page]);
 
   // Fetch detail + photos when selected business changes
   useEffect(() => {
