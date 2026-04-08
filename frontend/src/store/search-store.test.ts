@@ -6,7 +6,9 @@ beforeEach(() => {
     city: '',
     category: null,
     minStars: null,
-    sortBy: 'stars',
+    name: null,
+    scope: 'city',
+    sortBy: 'relevance',
     order: 'desc',
     page: 1,
     selectedId: null,
@@ -32,6 +34,28 @@ describe('setFilter', () => {
     expect(minStars).toBe(4)
     expect(category).toBe('Mexican')
     expect(page).toBe(1)
+  })
+
+  it('sets name via setFilter', () => {
+    useSearchStore.getState().setFilter({ name: 'Dominos' })
+    expect(useSearchStore.getState().name).toBe('Dominos')
+  })
+
+  it('clears name to null via setFilter', () => {
+    useSearchStore.setState({ name: 'Dominos' })
+    useSearchStore.getState().setFilter({ name: null })
+    expect(useSearchStore.getState().name).toBeNull()
+  })
+
+  it('sets scope to radius via setFilter', () => {
+    useSearchStore.getState().setFilter({ scope: 'radius' })
+    expect(useSearchStore.getState().scope).toBe('radius')
+  })
+
+  it('resets scope back to city via setFilter', () => {
+    useSearchStore.setState({ scope: 'radius' })
+    useSearchStore.getState().setFilter({ scope: 'city' })
+    expect(useSearchStore.getState().scope).toBe('city')
   })
 })
 
