@@ -51,4 +51,13 @@ describe('BusinessCard', () => {
     expect(screen.getByTestId('business-card-photo')).toBeInTheDocument()
     expect(screen.getByText('food')).toBeInTheDocument()
   })
+
+  it('applies selected styles when isSelected is true', () => {
+    render(
+      <BusinessCard business={business} isSelected={true} onClick={vi.fn()} photos={[]} />
+    )
+    const btn = screen.getByRole('button')
+    expect(btn.className).toContain('bg-blue-50')
+    expect(btn.className).toContain('border-l-blue-500')
+  })
 })

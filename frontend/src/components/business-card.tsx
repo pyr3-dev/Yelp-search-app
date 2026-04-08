@@ -12,7 +12,7 @@ interface BusinessCardProps {
 
 function BusinessCardPhoto({ photos }: { photos: PhotoResult[] }) {
   if (photos.length === 0) return null
-  const label = photos[0].label ?? '📷'
+  const label = photos[0].label
   return (
     <div
       data-testid="business-card-photo"
@@ -37,7 +37,7 @@ function BusinessCard({ business, isSelected, onClick, photos }: BusinessCardPro
       onClick={onClick}
       className={cn(
         'w-full text-left flex gap-3 px-4 py-3 border-b border-slate-100 hover:bg-slate-50 transition-colors',
-        isSelected && 'bg-blue-50 border-l-2 border-l-blue-500 pl-3.5',
+        isSelected && 'bg-blue-50 border-l-2 border-l-blue-500',
       )}
     >
       <BusinessCard.Photo photos={photos} />
