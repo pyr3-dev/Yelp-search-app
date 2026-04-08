@@ -1,7 +1,12 @@
-import { Fragment } from 'react'
+import { Fragment, useState } from 'react'
 import type { BusinessDetail, PhotoResult, TipResult } from '@/types'
 import { StarRating } from './star-rating'
 import { StatusBadge } from './status-badge'
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+} from '@/components/ui/dialog'
 
 // Convert "11:0" or "11:00" → "11:00 AM"
 function to12h(time: string): string {
@@ -23,19 +28,43 @@ const DAY_ORDER = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Satu
 // Sub-components
 
 function PhotoStrip({ photos }: { photos: PhotoResult[] }) {
+  const [selected, setSelected] = useState<PhotoResult | null>(null)
+
   if (photos.length === 0) return null
   return (
-    <div className="flex gap-2 px-4 pt-4 overflow-x-auto">
-      {photos.map((p) => (
-        <img
-          key={p.photo_id}
-          src={`/api/photos/${p.photo_id}`}
-          alt={p.label ?? p.caption ?? ''}
-          className="min-w-[90px] h-16 rounded-lg object-cover shrink-0 bg-slate-100"
-          onError={(e) => { e.currentTarget.style.display = 'none' }}
-        />
-      ))}
-    </div>
+    <>
+      <div className="flex gap-2 px-4 pt-4 overflow-x-auto">
+        {photos.map((p) => (
+          <button
+            key={p.photo_id}
+            onClick={() => setSelected(p)}
+            className="shrink-0 rounded-lg overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+          >
+            <img
+              src={`/api/photos/${p.photo_id}`}
+              alt={p.label ?? p.caption ?? ''}
+              className="w-28 h-20 object-cover bg-slate-100 hover:opacity-90 transition-opacity"
+              onError={(e) => { e.currentTarget.parentElement!.style.display = 'none' }}
+            />
+          </button>
+        ))}
+      </div>
+
+      <Dialog open={selected !== null} onOpenChange={(open) => !open && setSelected(null)}>
+        <DialogContent className="max-w-3xl p-0 overflow-hidden">
+          <DialogTitle className="sr-only">
+            {selected?.label ?? selected?.caption ?? 'Photo'}
+          </DialogTitle>
+          {selected && (
+            <img
+              src={`/api/photos/${selected.photo_id}`}
+              alt={selected.label ?? selected.caption ?? ''}
+              className="w-full max-h-[80vh] object-contain bg-black"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }
 
