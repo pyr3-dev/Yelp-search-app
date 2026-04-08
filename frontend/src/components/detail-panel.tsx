@@ -27,14 +27,13 @@ function PhotoStrip({ photos }: { photos: PhotoResult[] }) {
   return (
     <div className="flex gap-2 px-4 pt-4 overflow-x-auto">
       {photos.map((p) => (
-        <div
+        <img
           key={p.photo_id}
-          className="min-w-[90px] h-16 rounded-lg bg-amber-100 flex items-center justify-center shrink-0"
-        >
-          <span className="text-xs text-amber-700 font-medium capitalize text-center px-2 leading-tight">
-            {p.label ?? p.caption ?? '📷'}
-          </span>
-        </div>
+          src={`/api/photos/${p.photo_id}`}
+          alt={p.label ?? p.caption ?? ''}
+          className="min-w-[90px] h-16 rounded-lg object-cover shrink-0 bg-slate-100"
+          onError={(e) => { e.currentTarget.style.display = 'none' }}
+        />
       ))}
     </div>
   )
