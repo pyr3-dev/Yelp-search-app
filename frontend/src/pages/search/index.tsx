@@ -26,10 +26,12 @@ export function SearchPage() {
   const [detail, setDetail] = useState<BusinessDetail | null>(null)
   const [photos, setPhotos] = useState<PhotoResult[]>([])
   const [detailLoading, setDetailLoading] = useState(false)
+  const [detailError, setDetailError] = useState<string | null>(null)
 
   // Fetch list when search params change
   useEffect(() => {
     if (!city) return
+    setResults([])
     setListLoading(true)
     setListError(null)
     fetchBusinesses({
@@ -57,6 +59,7 @@ export function SearchPage() {
       return
     }
     setDetailLoading(true)
+    setDetailError(null)
     Promise.all([fetchBusinessDetail(selectedId), fetchBusinessPhotos(selectedId)])
       .then(([d, p]) => {
         setDetail(d)
@@ -65,6 +68,7 @@ export function SearchPage() {
       .catch(() => {
         setDetail(null)
         setPhotos([])
+        setDetailError('Failed to load business details.')
       })
       .finally(() => setDetailLoading(false))
   }, [selectedId])
@@ -92,11 +96,17 @@ export function SearchPage() {
 
       {/* Right panel */}
       <div className="flex-1 bg-slate-50 overflow-hidden">
-        <DetailPanel
-          business={detail}
-          photos={photos}
-          loading={detailLoading}
-        />
+        {detailError ? (
+          <div className="flex items-center justify-center h-full text-xs text-red-500">
+            {detailError}
+          </div>
+        ) : (
+          <DetailPanel
+            business={detail}
+            photos={photos}
+            loading={detailLoading}
+          />
+        )}
       </div>
     </div>
   )

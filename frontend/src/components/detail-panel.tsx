@@ -83,7 +83,7 @@ function Stats({
             <p className="text-xs font-semibold text-slate-900">
               {latitude.toFixed(4)}° N
             </p>
-            <p className="text-xs text-slate-500">{Math.abs(longitude).toFixed(4)}° W</p>
+            <p className="text-xs text-slate-500">{Math.abs(longitude).toFixed(4)}° {longitude < 0 ? 'W' : 'E'}</p>
           </>
         ) : (
           <p className="text-xs text-slate-400">—</p>
