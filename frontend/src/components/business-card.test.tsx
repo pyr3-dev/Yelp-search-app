@@ -48,8 +48,10 @@ describe('BusinessCard', () => {
     render(
       <BusinessCard business={business} isSelected={false} onClick={vi.fn()} photos={photos} />
     )
-    expect(screen.getByTestId('business-card-photo')).toBeInTheDocument()
-    expect(screen.getByText('food')).toBeInTheDocument()
+    const img = screen.getByTestId('business-card-photo')
+    expect(img).toBeInTheDocument()
+    expect(img).toHaveAttribute('src', '/api/photos/p1')
+    expect(img).toHaveAttribute('alt', 'food')
   })
 
   it('applies selected styles when isSelected is true', () => {
