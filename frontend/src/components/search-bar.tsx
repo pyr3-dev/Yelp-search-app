@@ -19,7 +19,7 @@ export function SearchBar() {
         value={value}
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={(e) => e.key === 'Enter' && submit()}
-        onBlur={submit}
+        onBlur={() => { if (value.trim() !== storeCity) submit() }}
         placeholder="Search city..."
         className="bg-transparent text-sm text-slate-700 placeholder:text-slate-400 outline-none w-full"
       />

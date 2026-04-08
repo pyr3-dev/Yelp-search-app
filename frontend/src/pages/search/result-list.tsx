@@ -55,7 +55,8 @@ export function ResultList({ results, total, limit, loading, photos }: ResultLis
               ←
             </button>
             {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-              const p = i + 1
+              const start = Math.max(1, Math.min(page - 2, totalPages - 4))
+              const p = start + i
               return (
                 <button
                   key={p}
