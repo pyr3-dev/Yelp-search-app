@@ -47,6 +47,7 @@ def test_geocode_city_raises_for_unknown_city():
 
 
 def test_haversine_miles_expr_returns_expression():
+    from sqlalchemy.sql.elements import ColumnElement
     from services.geocoding import haversine_miles_expr
     expr = haversine_miles_expr(33.448, -112.074)
-    assert expr is not None
+    assert isinstance(expr, ColumnElement)

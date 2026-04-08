@@ -1,7 +1,7 @@
 import math
 
 from geopy.geocoders import Nominatim
-from sqlalchemy import func, cast, Float
+from sqlalchemy import func
 
 from models import Business
 
@@ -27,8 +27,8 @@ def haversine_miles_expr(center_lat: float, center_lon: float):
     lat1 = math.radians(center_lat)
     lon1 = math.radians(center_lon)
 
-    lat2 = cast(Business.latitude, Float) * math.pi / 180
-    lon2 = cast(Business.longitude, Float) * math.pi / 180
+    lat2 = Business.latitude * math.pi / 180
+    lon2 = Business.longitude * math.pi / 180
 
     dlat = lat2 - lat1
     dlon = lon2 - lon1
