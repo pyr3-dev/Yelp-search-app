@@ -28,9 +28,10 @@ def test_search_businesses_returns_tuple():
     mock_q.filter.return_value = mock_q
     mock_q.count.return_value = 1
     mock_q.order_by.return_value = mock_q
+    mock_q.add_columns.return_value = mock_q
     mock_q.offset.return_value = mock_q
     mock_q.limit.return_value = mock_q
-    mock_q.all.return_value = [_make_mock_business()]
+    mock_q.all.return_value = [(_make_mock_business(), None)]
 
     results, total = search_businesses(mock_db, city="Phoenix")
 
@@ -66,6 +67,7 @@ def test_search_businesses_respects_pagination():
     mock_q.filter.return_value = mock_q
     mock_q.count.return_value = 50
     mock_q.order_by.return_value = mock_q
+    mock_q.add_columns.return_value = mock_q
     mock_q.offset.return_value = mock_q
     mock_q.limit.return_value = mock_q
     mock_q.all.return_value = []
@@ -107,8 +109,14 @@ def test_get_businesses_returns_200():
     mock_biz = MagicMock()
     for k, v in d.items():
         setattr(mock_biz, k, v)
+    mock_biz.__table__ = MagicMock()
+    mock_biz.__table__.columns = [
+        *(lambda cols: cols)(
+            [type("col", (), {"name": k})() for k in d.keys()]
+        )
+    ]
     with patch("controllers.businesses.search_businesses") as mock_svc:
-        mock_svc.return_value = ([mock_biz], 1)
+        mock_svc.return_value = ([(mock_biz, None)], 1)
         response = client.get("/businesses?city=Phoenix")
     assert response.status_code == 200
     data = response.json()
@@ -238,3 +246,58 @@ def test_get_business_reviews_with_datetime():
     assert data["results"][0]["review_id"] == "rev_001"
     assert data["results"][0]["stars"] == 4
     assert "2023" in data["results"][0]["date"]
+
+
+def test_search_businesses_accepts_name_param():
+    from services.businesses import search_businesses
+
+    mock_db = MagicMock()
+    mock_q = MagicMock()
+    mock_db.query.return_value = mock_q
+    mock_q.filter.return_value = mock_q
+    mock_q.count.return_value = 0
+    mock_q.order_by.return_value = mock_q
+    mock_q.add_columns.return_value = mock_q
+    mock_q.offset.return_value = mock_q
+    mock_q.limit.return_value = mock_q
+    mock_q.all.return_value = []
+
+    results, total = search_businesses(mock_db, city="Phoenix", name="Dominos")
+    assert total == 0
+    # name filter triggers an additional filter call (city + name = at least 2)
+    assert mock_q.filter.call_count >= 2
+
+
+def test_search_businesses_accepts_scope_param():
+    from services.businesses import search_businesses
+    from unittest.mock import patch
+
+    mock_db = MagicMock()
+    mock_q = MagicMock()
+    mock_db.query.return_value = mock_q
+    mock_q.filter.return_value = mock_q
+    mock_q.count.return_value = 0
+    mock_q.order_by.return_value = mock_q
+    mock_q.add_columns.return_value = mock_q
+    mock_q.offset.return_value = mock_q
+    mock_q.limit.return_value = mock_q
+    mock_q.all.return_value = []
+    mock_q.scalar.return_value = "Phoenix"
+
+    with patch("services.geocoding.geocode_city", return_value=(33.448, -112.074)):
+        results, total = search_businesses(mock_db, city="Phoenix", scope="radius")
+    assert total == 0
+
+
+def test_search_businesses_radius_no_city_match_returns_empty():
+    from services.businesses import search_businesses
+
+    mock_db = MagicMock()
+    mock_q = MagicMock()
+    mock_db.query.return_value = mock_q
+    mock_q.filter.return_value = mock_q
+    mock_q.scalar.return_value = None  # no city found via trigram
+
+    results, total = search_businesses(mock_db, city="zzzzz", scope="radius")
+    assert results == []
+    assert total == 0

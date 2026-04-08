@@ -1,9 +1,12 @@
+import math
 from typing import Literal, Optional
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from models import Business, Checkin, Photo, Review, Tip
+
+SIMILARITY_THRESHOLD = 0.3
 
 
 def search_businesses(
@@ -11,14 +14,34 @@ def search_businesses(
     city: str,
     category: Optional[str] = None,
     min_stars: Optional[float] = None,
-    sort_by: Literal["stars", "review_count", "name"] = "stars",
+    name: Optional[str] = None,
+    scope: Literal["city", "radius"] = "city",
+    sort_by: Literal["relevance", "stars", "review_count", "name"] = "relevance",
     order: Literal["asc", "desc"] = "desc",
     page: int = 1,
     limit: int = 20,
 ) -> tuple[list[tuple[Business, str | None]], int]:
-    query = db.query(Business).filter(
-        Business.city.ilike(f"%{city}%")
-    )
+    if scope == "radius":
+        from services.geocoding import geocode_city, haversine_miles_expr
+        canonical = (
+            db.query(Business.city)
+            .filter(func.similarity(Business.city, city) > SIMILARITY_THRESHOLD)
+            .scalar()
+        )
+        if canonical is None:
+            return [], 0
+        center_lat, center_lon = geocode_city(canonical)
+        distance_expr = haversine_miles_expr(center_lat, center_lon)
+        query = db.query(Business).filter(distance_expr <= 5.0)
+    else:
+        query = db.query(Business).filter(
+            func.similarity(Business.city, city) > SIMILARITY_THRESHOLD
+        )
+
+    if name:
+        query = query.filter(
+            func.similarity(Business.name, name) > SIMILARITY_THRESHOLD
+        )
     if category:
         query = query.filter(Business.categories.contains([category]))
     if min_stars is not None:
@@ -26,15 +49,21 @@ def search_businesses(
 
     total = query.count()
 
-    sort_col = {
-        "review_count": Business.review_count,
-        "name": Business.name,
-        "stars": Business.stars,
-    }.get(sort_by, Business.stars)
-
-    query = query.order_by(
-        sort_col.asc() if order == "asc" else sort_col.desc()
-    )
+    if sort_by == "relevance":
+        city_sim = func.similarity(Business.city, city)
+        relevance = (
+            (city_sim + func.similarity(Business.name, name)) / 2
+            if name
+            else city_sim
+        )
+        sort_expr = relevance.desc() if order == "desc" else relevance.asc()
+    else:
+        sort_col = {
+            "review_count": Business.review_count,
+            "name": Business.name,
+            "stars": Business.stars,
+        }.get(sort_by, Business.stars)
+        sort_expr = sort_col.asc() if order == "asc" else sort_col.desc()
 
     first_photo_subq = (
         select(Photo.photo_id)
@@ -45,7 +74,8 @@ def search_businesses(
     )
 
     rows = (
-        query.add_columns(first_photo_subq.label("first_photo_id"))
+        query.order_by(sort_expr)
+        .add_columns(first_photo_subq.label("first_photo_id"))
         .offset((page - 1) * limit)
         .limit(limit)
         .all()
