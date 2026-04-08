@@ -296,6 +296,8 @@ def test_search_businesses_radius_no_city_match_returns_empty():
     mock_q = MagicMock()
     mock_db.query.return_value = mock_q
     mock_q.filter.return_value = mock_q
+    mock_q.order_by.return_value = mock_q
+    mock_q.limit.return_value = mock_q
     mock_q.scalar.return_value = None  # no city found via trigram
 
     results, total = search_businesses(mock_db, city="zzzzz", scope="radius")

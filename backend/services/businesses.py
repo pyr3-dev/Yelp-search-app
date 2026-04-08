@@ -26,6 +26,8 @@ def search_businesses(
         canonical = (
             db.query(Business.city)
             .filter(func.similarity(Business.city, city) > SIMILARITY_THRESHOLD)
+            .order_by(func.similarity(Business.city, city).desc())
+            .limit(1)
             .scalar()
         )
         if canonical is None:
