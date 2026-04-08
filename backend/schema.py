@@ -32,6 +32,7 @@ class BusinessResult(BaseModel):
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     is_open: Optional[bool] = None
+    first_photo_id: Optional[str] = None
 
 
 class TipResult(BaseModel):

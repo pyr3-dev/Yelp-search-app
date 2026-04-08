@@ -1,5 +1,6 @@
 from typing import Literal, Optional
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from models import Business, Checkin, Photo, Review, Tip
@@ -14,7 +15,7 @@ def search_businesses(
     order: Literal["asc", "desc"] = "desc",
     page: int = 1,
     limit: int = 20,
-) -> tuple[list[Business], int]:
+) -> tuple[list[tuple[Business, str | None]], int]:
     query = db.query(Business).filter(
         Business.city.ilike(f"%{city}%")
     )
@@ -34,8 +35,22 @@ def search_businesses(
     query = query.order_by(
         sort_col.asc() if order == "asc" else sort_col.desc()
     )
-    results = query.offset((page - 1) * limit).limit(limit).all()
-    return results, total
+
+    first_photo_subq = (
+        select(Photo.photo_id)
+        .where(Photo.business_id == Business.business_id)
+        .limit(1)
+        .correlate(Business)
+        .scalar_subquery()
+    )
+
+    rows = (
+        query.add_columns(first_photo_subq.label("first_photo_id"))
+        .offset((page - 1) * limit)
+        .limit(limit)
+        .all()
+    )
+    return [(row[0], row[1]) for row in rows], total
 
 
 def get_business_detail(

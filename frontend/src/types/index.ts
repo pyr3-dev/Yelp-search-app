@@ -12,6 +12,7 @@ export interface BusinessResult {
   latitude: number | null
   longitude: number | null
   is_open: boolean | null
+  first_photo_id: string | null
 }
 
 export interface TipResult {
