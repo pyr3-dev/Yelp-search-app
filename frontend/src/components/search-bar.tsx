@@ -39,7 +39,7 @@ export function SearchBar() {
           value={nameValue}
           onChange={(e) => setNameValue(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && submitName()}
-          onBlur={submitName}
+          onBlur={() => { if ((nameValue.trim() || null) !== storeName) submitName() }}
           placeholder="Business name..."
           className="bg-transparent text-sm text-slate-700 placeholder:text-slate-400 outline-none w-full"
         />
