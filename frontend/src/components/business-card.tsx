@@ -16,7 +16,7 @@ function BusinessCardPhoto({ business }: { business: BusinessResult }) {
       data-testid="business-card-photo"
       src={`/api/photos/${business.first_photo_id}`}
       alt={business.name ?? ''}
-      className="w-14 h-12 rounded-md shrink-0 object-cover bg-slate-100"
+      className="w-20 h-16 rounded-md shrink-0 object-cover bg-slate-100"
       onError={(e) => { e.currentTarget.style.display = 'none' }}
     />
   )
