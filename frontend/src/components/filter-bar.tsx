@@ -11,7 +11,7 @@ import {
 const MIN_STARS_OPTIONS = ['1', '1.5', '2', '2.5', '3', '3.5', '4', '4.5', '5']
 
 export function FilterBar() {
-  const { category, minStars, sortBy, order, setFilter } = useSearchStore()
+  const { category, minStars, sortBy, order, scope, setFilter } = useSearchStore()
   const [catInput, setCatInput] = useState(category ?? '')
 
   const submitCategory = () => {
@@ -55,13 +55,14 @@ export function FilterBar() {
       <Select
         value={sortBy}
         onValueChange={(v) =>
-          setFilter({ sortBy: v as 'stars' | 'review_count' | 'name' })
+          setFilter({ sortBy: v as 'relevance' | 'stars' | 'review_count' | 'name' })
         }
       >
         <SelectTrigger className="h-8 text-xs w-32 bg-slate-50 border-slate-200">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
+          <SelectItem value="relevance">Relevance</SelectItem>
           <SelectItem value="stars">Stars</SelectItem>
           <SelectItem value="review_count">Review count</SelectItem>
           <SelectItem value="name">Name</SelectItem>
@@ -75,6 +76,30 @@ export function FilterBar() {
       >
         {order === 'desc' ? '↓ Desc' : '↑ Asc'}
       </button>
+
+      {/* Scope toggle */}
+      <div className="ml-auto flex overflow-hidden rounded-md border border-slate-200 text-xs">
+        <button
+          onClick={() => setFilter({ scope: 'city' })}
+          className={`px-3 py-1.5 transition-colors ${
+            scope === 'city'
+              ? 'bg-slate-800 text-white'
+              : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          Within city
+        </button>
+        <button
+          onClick={() => setFilter({ scope: 'radius' })}
+          className={`px-3 py-1.5 transition-colors ${
+            scope === 'radius'
+              ? 'bg-slate-800 text-white'
+              : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          Within 5 miles
+        </button>
+      </div>
     </div>
   )
 }
