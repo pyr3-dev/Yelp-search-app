@@ -48,6 +48,7 @@ def test_search_businesses_applies_category_filter():
     mock_q.filter.return_value = mock_q
     mock_q.count.return_value = 0
     mock_q.order_by.return_value = mock_q
+    mock_q.add_columns.return_value = mock_q
     mock_q.offset.return_value = mock_q
     mock_q.limit.return_value = mock_q
     mock_q.all.return_value = []
