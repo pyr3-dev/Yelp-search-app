@@ -19,7 +19,7 @@ export function FilterBar() {
   }
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
       {/* Category */}
       <input
         type="text"
@@ -28,7 +28,7 @@ export function FilterBar() {
         onBlur={submitCategory}
         onKeyDown={(e) => e.key === 'Enter' && submitCategory()}
         placeholder="Category"
-        className="text-xs border border-slate-200 rounded-md px-2 py-1.5 bg-slate-50 text-slate-700 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-slate-300 w-28"
+        className="text-xs border border-slate-200 rounded-md px-2 py-1.5 bg-slate-50 text-slate-700 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-slate-300 w-28 shrink-0"
       />
 
       {/* Min Stars */}
@@ -38,7 +38,7 @@ export function FilterBar() {
           setFilter({ minStars: v !== 'any' ? parseFloat(v) : null })
         }
       >
-        <SelectTrigger className="h-8 text-xs w-28 bg-slate-50 border-slate-200">
+        <SelectTrigger className="h-8 text-xs w-28 shrink-0 bg-slate-50 border-slate-200">
           <SelectValue placeholder="Min stars" />
         </SelectTrigger>
         <SelectContent>
@@ -58,7 +58,7 @@ export function FilterBar() {
           setFilter({ sortBy: v as 'relevance' | 'stars' | 'review_count' | 'name' })
         }
       >
-        <SelectTrigger className="h-8 text-xs w-32 bg-slate-50 border-slate-200">
+        <SelectTrigger className="h-8 text-xs w-32 shrink-0 bg-slate-50 border-slate-200">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -72,13 +72,13 @@ export function FilterBar() {
       {/* Order toggle */}
       <button
         onClick={() => setFilter({ order: order === 'desc' ? 'asc' : 'desc' })}
-        className="h-8 px-2.5 text-xs border border-slate-200 rounded-md bg-slate-50 text-slate-600 hover:bg-slate-100 transition-colors"
+        className="h-8 px-2.5 text-xs border border-slate-200 rounded-md bg-slate-50 text-slate-600 hover:bg-slate-100 transition-colors shrink-0"
       >
         {order === 'desc' ? '↓ Desc' : '↑ Asc'}
       </button>
 
       {/* Scope toggle */}
-      <div className="ml-auto flex overflow-hidden rounded-md border border-slate-200 text-xs">
+      <div className="flex shrink-0 overflow-hidden rounded-md border border-slate-200 text-xs">
         <button
           onClick={() => setFilter({ scope: null })}
           className={`px-3 py-1.5 transition-colors ${

@@ -13,7 +13,7 @@ import type { BusinessDetail, BusinessResult, PhotoResult } from "@/types";
 const LIMIT = 20;
 
 export function SearchPage() {
-  const { city, name, scope, category, minStars, sortBy, order, page, selectedId } =
+  const { city, name, scope, category, minStars, sortBy, order, page, selectedId, selectBusiness } =
     useSearchStore();
 
   // List state
@@ -84,8 +84,8 @@ export function SearchPage() {
 
   return (
     <div className="flex h-full overflow-hidden">
-      {/* Left panel */}
-      <div className="w-80 border-r border-slate-200 flex flex-col shrink-0 bg-white">
+      {/* Left panel — hidden on mobile when a detail is open */}
+      <div className={`${selectedId ? 'hidden md:flex' : 'flex'} w-full md:w-80 border-r border-slate-200 flex-col shrink-0 bg-white`}>
         {showEmptyList && !listLoading ? (
           <EmptyState variant={city ? "no-results" : "idle"} />
         ) : listError ? (
@@ -100,8 +100,16 @@ export function SearchPage() {
         )}
       </div>
 
-      {/* Right panel */}
-      <div className="flex-1 bg-slate-50 overflow-hidden">
+      {/* Right panel — hidden on mobile when no detail is selected */}
+      <div className={`${selectedId ? 'flex' : 'hidden md:flex'} flex-1 flex-col bg-slate-50 overflow-hidden`}>
+        {/* Mobile back button */}
+        <button
+          onClick={() => selectBusiness(null)}
+          className="md:hidden flex items-center gap-1 px-4 py-2.5 text-xs text-slate-500 bg-white border-b border-slate-200 shrink-0 hover:bg-slate-50"
+        >
+          ← Back to list
+        </button>
+
         {detailError ? (
           <div className="flex items-center justify-center h-full text-xs text-red-500">
             {detailError}

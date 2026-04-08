@@ -19,9 +19,9 @@ export function SearchBar() {
   }
 
   return (
-    <div className="flex items-center gap-1.5">
-      <div className="flex items-center gap-1.5 bg-slate-100 border border-slate-200 rounded-md px-3 py-1.5 w-64 focus-within:ring-2 focus-within:ring-slate-300">
-        <span className="text-slate-400 text-sm">🔍</span>
+    <div className="flex flex-col gap-1.5 md:flex-row md:items-center">
+      <div className="flex items-center gap-1.5 bg-slate-100 border border-slate-200 rounded-md px-3 py-2 md:py-1.5 md:w-64 focus-within:ring-2 focus-within:ring-slate-300">
+        <span className="text-slate-400 text-sm shrink-0">🔍</span>
         <input
           type="text"
           value={cityValue}
@@ -32,8 +32,8 @@ export function SearchBar() {
           className="bg-transparent text-sm text-slate-700 placeholder:text-slate-400 outline-none w-full"
         />
       </div>
-      <div className="flex items-center gap-1.5 bg-slate-100 border border-slate-200 rounded-md px-3 py-1.5 w-56 focus-within:ring-2 focus-within:ring-slate-300">
-        <span className="text-slate-400 text-sm">🏪</span>
+      <div className="flex items-center gap-1.5 bg-slate-100 border border-slate-200 rounded-md px-3 py-2 md:py-1.5 md:w-56 focus-within:ring-2 focus-within:ring-slate-300">
+        <span className="text-slate-400 text-sm shrink-0">🏪</span>
         <input
           type="text"
           value={nameValue}
