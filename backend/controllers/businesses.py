@@ -29,7 +29,7 @@ async def search_controller(
     limit: Annotated[int, Query(ge=1, le=100)] = 20,
     db: Session = Depends(get_db),
 ) -> BusinessSearchResponse:
-    results, total = search_businesses(
+    rows, total = search_businesses(
         db,
         city=city,
         category=category,
@@ -39,6 +39,13 @@ async def search_controller(
         page=page,
         limit=limit,
     )
+    results = [
+        BusinessResult(
+            **{c.name: getattr(business, c.name) for c in business.__table__.columns},
+            first_photo_id=first_photo_id,
+        )
+        for business, first_photo_id in rows
+    ]
     return BusinessSearchResponse(
         total=total,
         page=page,
