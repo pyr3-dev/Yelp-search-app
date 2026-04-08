@@ -1,7 +1,7 @@
 import { useSearchStore } from '@/store/search-store'
 import { BusinessCard } from '@/components/business-card'
 import { BusinessCardSkeleton } from '@/components/business-card-skeleton'
-import type { BusinessResult, PhotoResult } from '@/types'
+import type { BusinessResult } from '@/types'
 
 const SKELETON_COUNT = 6
 
@@ -10,10 +10,9 @@ interface ResultListProps {
   total: number
   limit: number
   loading: boolean
-  photos: PhotoResult[]
 }
 
-export function ResultList({ results, total, limit, loading, photos }: ResultListProps) {
+export function ResultList({ results, total, limit, loading }: ResultListProps) {
   const page = useSearchStore((s) => s.page)
   const setPage = useSearchStore((s) => s.setPage)
   const selectedId = useSearchStore((s) => s.selectedId)
@@ -35,7 +34,6 @@ export function ResultList({ results, total, limit, loading, photos }: ResultLis
                 business={biz}
                 isSelected={biz.business_id === selectedId}
                 onClick={() => selectBusiness(biz.business_id)}
-                photos={biz.business_id === selectedId ? photos : []}
               />
             ))}
       </div>

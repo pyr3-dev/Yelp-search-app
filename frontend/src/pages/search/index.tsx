@@ -94,7 +94,6 @@ export function SearchPage() {
             total={total}
             limit={LIMIT}
             loading={listLoading}
-            photos={photos}
           />
         )}
       </div>
