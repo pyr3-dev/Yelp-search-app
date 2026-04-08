@@ -47,7 +47,9 @@ export interface BusinessSearchParams {
   city: string
   category?: string
   min_stars?: number
-  sort_by?: 'stars' | 'review_count' | 'name'
+  name?: string
+  scope?: 'city' | 'radius'
+  sort_by?: 'relevance' | 'stars' | 'review_count' | 'name'
   order?: 'asc' | 'desc'
   page?: number
   limit?: number
@@ -56,6 +58,8 @@ export interface BusinessSearchParams {
 export type SearchFilters = {
   category: string | null
   minStars: number | null
-  sortBy: 'stars' | 'review_count' | 'name'
+  name: string | null
+  scope: 'city' | 'radius'
+  sortBy: 'relevance' | 'stars' | 'review_count' | 'name'
   order: 'asc' | 'desc'
 }
