@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from models import Business, Checkin, Photo, Review, Tip
 
-SIMILARITY_THRESHOLD = 0.3
+SIMILARITY_THRESHOLD = 0.2
 
 
 def search_businesses(
