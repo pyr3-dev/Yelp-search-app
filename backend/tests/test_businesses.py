@@ -304,3 +304,40 @@ def test_search_businesses_radius_no_city_match_returns_empty():
     results, total = search_businesses(mock_db, city="zzzzz", scope="radius")
     assert results == []
     assert total == 0
+
+
+def test_search_passes_name_param_to_service():
+    with patch("controllers.businesses.search_businesses") as mock_svc:
+        mock_svc.return_value = ([], 0)
+        response = client.get("/businesses?city=Phoenix&name=Dominos")
+    assert response.status_code == 200
+    assert mock_svc.call_args.kwargs["name"] == "Dominos"
+
+
+def test_search_passes_scope_radius_to_service():
+    with patch("controllers.businesses.search_businesses") as mock_svc:
+        mock_svc.return_value = ([], 0)
+        response = client.get("/businesses?city=Phoenix&scope=radius")
+    assert response.status_code == 200
+    assert mock_svc.call_args.kwargs["scope"] == "radius"
+
+
+def test_search_scope_radius_geocode_failure_returns_422():
+    with patch("controllers.businesses.search_businesses") as mock_svc:
+        mock_svc.side_effect = ValueError("Could not geocode city: Atlantis")
+        response = client.get("/businesses?city=Atlantis&scope=radius")
+    assert response.status_code == 422
+    assert "Could not geocode city" in response.json()["detail"]
+
+
+def test_search_default_sort_by_is_relevance():
+    with patch("controllers.businesses.search_businesses") as mock_svc:
+        mock_svc.return_value = ([], 0)
+        response = client.get("/businesses?city=Phoenix")
+    assert response.status_code == 200
+    assert mock_svc.call_args.kwargs["sort_by"] == "relevance"
+
+
+def test_search_invalid_scope_returns_422():
+    response = client.get("/businesses?city=Phoenix&scope=invalid")
+    assert response.status_code == 422

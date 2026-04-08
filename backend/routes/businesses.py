@@ -25,7 +25,11 @@ async def search(
     city: Annotated[str, Query()],
     category: Annotated[Optional[str], Query()] = None,
     min_stars: Annotated[Optional[float], Query(ge=0.0, le=5.0)] = None,
-    sort_by: Annotated[Literal["stars", "review_count", "name"], Query()] = "stars",
+    name: Annotated[Optional[str], Query()] = None,
+    scope: Annotated[Literal["city", "radius"], Query()] = "city",
+    sort_by: Annotated[
+        Literal["relevance", "stars", "review_count", "name"], Query()
+    ] = "relevance",
     order: Annotated[Literal["asc", "desc"], Query()] = "desc",
     page: Annotated[int, Query(ge=1)] = 1,
     limit: Annotated[int, Query(ge=1, le=100)] = 20,
@@ -35,6 +39,8 @@ async def search(
         city=city,
         category=category,
         min_stars=min_stars,
+        name=name,
+        scope=scope,
         sort_by=sort_by,
         order=order,
         page=page,
