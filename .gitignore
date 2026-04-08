@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+.venv
+.env
+
+# Node
+node_modules/
+frontend/dist/
+package-lock.json
+frontend/package-lock.json

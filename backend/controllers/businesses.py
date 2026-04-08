@@ -40,7 +40,7 @@ async def search_controller(
         limit=limit,
     )
     results = [
-        BusinessResult(
+        BusinessDetail(
             **{c.name: getattr(business, c.name) for c in business.__table__.columns},
             first_photo_id=first_photo_id,
         )
